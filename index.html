@@ -1223,7 +1223,11 @@ footer{background:var(--dark2);border-top:1px solid rgba(201,168,76,0.1);padding
 // ════════════════════════════════════
 
 // ── CONFIG (reads from admin settings) ──
-let SCRIPT_URL = localStorage.getItem('ah_script_url') || '';
+// ── PERMANENT SCRIPT URL — kabhi nahi badlega ──
+const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbxRb88uRLNkgEJpedOvbAbi0-OH6FGqBE9MlN90Zi3oD5XgtFWNmBHU9EuxGwvBvn3Sjw/exec';
+let SCRIPT_URL = HARDCODED_URL;
+// localStorage mein bhi save karo (clean)
+localStorage.setItem('ah_script_url', HARDCODED_URL);
 let WA_NUMBER  = '923433194763';
 let JC_NUMBER  = '03433194763';
 let EP_NUMBER  = '03433194763';
@@ -1301,7 +1305,9 @@ let curCat='all'; let selPaymentMethod=''; let selRating=0;
 
 // ── API ──
 function cleanUrl(u) {
-  return (u||'').replace(/^["'\s]+|["'\s]+$/g,'').trim();
+  // Hamesha hardcoded URL use karo — localStorage override bhi handle karo
+  const saved = (u||'').replace(/^["'\s]+|["'\s]+$/g,'').trim();
+  return saved || HARDCODED_URL;
 }
 
 async function api(action, data={}) {
