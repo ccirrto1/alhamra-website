@@ -685,7 +685,10 @@ const DEF_SHOP={name:'Al Hamra Tailors & Cloth House',addr1:'Shop No.3, Block, A
 const DEF_SOCIAL={wa:'923433194763',wamsg:'Asalamualaikum! Al Hamra Tailors se order karna hai.',fb:'',ig:'',tt:'',yt:''};
 
 // ── STATE ──
-let scriptUrl=''; let isOnline=false;
+// ── PERMANENT SCRIPT URL ──
+const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbxRb88uRLNkgEJpedOvbAbi0-OH6FGqBE9MlN90Zi3oD5XgtFWNmBHU9EuxGwvBvn3Sjw/exec';
+let scriptUrl = HARDCODED_URL;
+let isOnline = false;
 let allProds=[], allOrders=[], allCats=[], allRevs=[];
 let services=[], whyItems=[];
 let selBadge=''; let prodCatFilter=''; let orderStatFilter='';
@@ -693,7 +696,10 @@ let selBadge=''; let prodCatFilter=''; let orderStatFilter='';
 // ── LS HELPERS ──
 const ls=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d;}catch{return d;}};
 const lss=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-function cleanUrl(u){return (u||'').replace(/^["'\s]+|["'\s]+$/g,'').trim();}
+function cleanUrl(u){
+  const saved = (u||'').replace(/^["'\s]+|["'\s]+$/g,'').trim();
+  return saved || HARDCODED_URL;
+}
 
 // ── LOGIN ──
 function doLogin(){
@@ -713,9 +719,7 @@ function doLogout(){document.getElementById('loginWrap').style.display='flex';do
 
 // ── API ──
 async function api(action,data={}){
-  let url = cleanUrl(ls('ah_script_url',''));
-  if(url) lss('ah_script_url', url); // clean version save
-  if(!url) return null;
+  const url = HARDCODED_URL;
   try{
     const params = new URLSearchParams({action,...Object.fromEntries(
       Object.entries(data).map(([k,v])=>[k,typeof v==='object'?JSON.stringify(v):v])
@@ -769,12 +773,10 @@ function saveScriptUrl(){
 
 // ── INIT ──
 function initAdmin(){
-  // Saved URL clean karo — quotes remove
-  let saved = ls('ah_script_url','')||'';
-  saved = saved.replace(/^["'\s]+|["'\s]+$/g,'').trim();
-  if(saved) lss('ah_script_url', saved);
-  scriptUrl = saved;
-  if(scriptUrl) document.getElementById('scriptUrlInp').value=scriptUrl;
+  // Hardcoded URL — hamesha available, localStorage ki zarurat nahi
+  scriptUrl = HARDCODED_URL;
+  localStorage.setItem('ah_script_url', HARDCODED_URL);
+  document.getElementById('scriptUrlInp').value = HARDCODED_URL;
   loadWebsiteData();
   buildSzChecks();
   checkConn().then(()=>refreshAll());
@@ -856,7 +858,7 @@ async function loadOrders(){
   if(badge){ badge.textContent=pending; badge.style.display=pending>0?'block':'none'; }
 
   // Set Google Sheet link
-  const url = ls('ah_script_url','');
+  const url = HARDCODED_URL;
   const sheetEl = document.getElementById('sheetLink');
   if(sheetEl && url) sheetEl.href = url.replace('/exec','/edit')||'#';
 }
@@ -936,7 +938,7 @@ async function updateOrderStat(oid,status){
   if(badge){badge.textContent=pending;badge.style.display=pending>0?'block':'none';}
 
   // Google Sheet update — direct GET
-  const url = cleanUrl(ls('ah_script_url',''));
+  const url = HARDCODED_URL;
   if(url){
     try{
       const params = new URLSearchParams({
@@ -1062,7 +1064,7 @@ async function saveProd(){
   btn.innerHTML='<span class="spinner"></span> Saving...';btn.disabled=true;
 
   // Google Sheet mein save — GET params se
-  const url = cleanUrl(ls('ah_script_url',''));
+  const url = HARDCODED_URL;
   if(url){
     try{
       const action = editId ? 'updateProduct' : 'addProduct';
@@ -1284,7 +1286,7 @@ function confirmDel(type,id,name){
 }
 
 async function delProd(id){
-  const url=cleanUrl(ls('ah_script_url',''));
+  const url=HARDCODED_URL;
   if(url){
     try{
       const params=new URLSearchParams({action:'deleteProduct',id:String(id)});
