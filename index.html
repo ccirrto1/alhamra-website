@@ -1150,6 +1150,10 @@ footer{background:var(--dark2);border-top:1px solid rgba(201,168,76,0.1);padding
       <div><label class="cf-label">Naam *</label><input type="text" class="cf-input" id="cfName" placeholder="Muhammad Ali"></div>
       <div><label class="cf-label">Phone *</label><input type="text" class="cf-input" id="cfPhone" placeholder="03XX-XXXXXXX"></div>
     </div>
+    <div class="cf-row">
+      <div><label class="cf-label">Email *</label><input type="email" class="cf-input" id="cfEmail" placeholder="aapka@email.com"></div>
+      <div><label class="cf-label">Address *</label><input type="text" class="cf-input" id="cfAddress" placeholder="Ghar ka address, city"></div>
+    </div>
     <label class="cf-label">Payment *</label>
     <div class="payment-methods">
       <div class="pay-opt cash" onclick="selPayment('cash',this)"><span class="pay-icon">💵</span><div class="pay-name">Cash</div></div>
@@ -1890,8 +1894,12 @@ function selPayment(method,el) {
 async function placeOrder() {
   const name=document.getElementById('cfName').value.trim();
   const phone=document.getElementById('cfPhone').value.trim();
+  const email=document.getElementById('cfEmail').value.trim();
+  const address=document.getElementById('cfAddress').value.trim();
   if(!name){showToast('⚠️ Naam zaroori hai!');return;}
   if(!phone){showToast('⚠️ Phone zaroori hai!');return;}
+  if(!email||!email.includes('@')){showToast('⚠️ Sahi email daalo!');return;}
+  if(!address){showToast('⚠️ Address zaroori hai!');return;}
   if(!selPaymentMethod){showToast('⚠️ Payment method choose karein!');return;}
   const btn=document.getElementById('orderBtn');
   btn.textContent='⏳ Processing...'; btn.disabled=true;
@@ -1900,59 +1908,46 @@ async function placeOrder() {
   const date=new Date().toLocaleDateString('en-PK',{day:'2-digit',month:'2-digit',year:'numeric'});
   const payLabel=selPaymentMethod==='cash'?'Cash on Delivery':selPaymentMethod==='jazzcash'?'JazzCash':'Easypaisa';
 
-  // Items ko readable string banao
   const itemsStr=cart.map(c=>c.name+' ('+c.size+') Rs.'+c.price).join(' | ');
-  // Items array bhi rakh (for WA message)
   const itemsArr=cart.map(c=>({name:c.name,size:c.size,price:c.price}));
+  const note=document.getElementById('cfNote').value.trim();
 
   const orderData={
-    order_id: orderId,
-    customer_name: name,
-    phone,
-    items: itemsArr,       // array - localStorage ke liye
-    itemsStr,              // string - display ke liye
-    'total_(rs.)': total,
-    total,
-    note: document.getElementById('cfNote').value.trim(),
-    payment: payLabel,
-    payment_method: payLabel,
-    status: 'Pending',
-    date
+    order_id: orderId, customer_name: name, phone, email, address,
+    items: itemsArr, itemsStr,
+    'total_(rs.)': total, total,
+    note, payment: payLabel, payment_method: payLabel,
+    status: 'Pending', date
   };
 
-  // ✅ localStorage mein save — hamesha kaam kare
+  // localStorage save
   try {
     const saved=JSON.parse(localStorage.getItem('ah_orders')||'[]');
     saved.unshift(orderData);
     localStorage.setItem('ah_orders',JSON.stringify(saved.slice(0,200)));
   } catch(e){}
 
-  // ✅ Google Sheet — GET request se bhejo (POST CORS issue bypass)
-  const scriptUrl = cleanUrl(localStorage.getItem('ah_script_url'));
-  if(scriptUrl){
-    try{
-      const params=new URLSearchParams({
-        action:'placeOrder',
-        order_id: orderId,
-        customer_name: name,
-        phone,
-        items: itemsStr,
-        'total_(rs.)': total,
-        payment: payLabel,
-        note: orderData.note||'',
-        status: 'Pending',
-        date
-      });
-      fetch(scriptUrl+'?'+params.toString(),{method:'GET',redirect:'follow'}).catch(()=>{});
-    }catch(e){}
-  }
+  // Google Sheet + Email notification
+  try{
+    const params=new URLSearchParams({
+      action:'placeOrder',
+      order_id: orderId, customer_name: name,
+      phone, email, address,
+      items: itemsStr,
+      'total_(rs.)': total,
+      payment: payLabel,
+      note: note||'',
+      status: 'Pending', date
+    });
+    fetch(HARDCODED_URL+'?'+params.toString(),{method:'GET',redirect:'follow'}).catch(()=>{});
+  }catch(e){}
 
-  // UI update
+  // UI reset
   const waMsg=buildWAMsg(orderId,orderData);
   document.getElementById('successOrderId').textContent=orderId;
   document.getElementById('successWaBtn').href=`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waMsg)}`;
   cart=[];selSizes={};selPaymentMethod='';
-  ['cfName','cfPhone','cfNote'].forEach(id=>document.getElementById(id).value='');
+  ['cfName','cfPhone','cfEmail','cfAddress','cfNote'].forEach(id=>document.getElementById(id).value='');
   document.querySelectorAll('.pay-opt').forEach(p=>p.classList.remove('sel'));
   document.getElementById('payDetail').classList.remove('show');
   updateCartUI(); toggleCart(); showSuccess();
