@@ -892,6 +892,8 @@ function renderOrders(list){
       <td>
         <div class="td-name">${o.customer_name||'—'}</div>
         <div class="td-sub">${o.phone||''}</div>
+        ${o.email?`<div class="td-sub" style="color:var(--gold2)">📧 ${o.email}</div>`:''}
+        ${o.address?`<div class="td-sub">📍 ${o.address}</div>`:''}
         ${note?`<div style="font-size:0.68rem;color:var(--gold2);margin-top:3px;background:rgba(201,168,67,0.08);padding:3px 7px;border-radius:5px;border-left:2px solid var(--gold)">📝 ${note.slice(0,50)}${note.length>50?'...':''}</div>`:''}
       </td>
       <td style="max-width:200px;font-size:0.75rem;color:rgba(255,255,255,0.6);line-height:1.5">${itemsDisplay}</td>
